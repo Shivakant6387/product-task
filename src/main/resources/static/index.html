@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Product Management</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+</head>
+<body>
+<h1>Product Management</h1>
+
+<form id="productForm">
+    <input type="hidden" id="productId">
+    <input type="text" id="productName" placeholder="Product Name" required>
+    <input type="text" id="productCategory" placeholder="Product category" required>
+    <input type="file" id="productImage" placeholder="Product Image" required>
+    <button id="saveButton">Save</button>
+</form>
+
+<table id="productTable">
+    <thead>
+    <tr>
+        <th>ID</th>
+        <th>Name</th>
+        <th>Category</th>
+        <th>Image</th>
+        <th>Actions</th>
+    </tr>
+    </thead>
+    <tbody>
+    </tbody>
+</table>
+
+<script>
+    $(document).ready(function() {
+        loadProducts();
+
+        $('#productForm').submit(function(event) {
+            event.preventDefault();
+            var productId = $('#productId').val();
+            var productName = $('#productName').val();
+            var productCategory = $('#productCategory').val();
+            var productImage = $('#productImage').val();
+            if (productId === '') {
+                createProduct(productName, productCategory,productImage);
+            } else {
+                updateProduct(productId, productName , productCategory, productImage);
+            }
+        });
+
+        function loadProducts() {
+            $.ajax({
+                url: '/products/all',
+                type: 'GET',
+                success: function(data) {
+                    var tableBody = $('#productTable tbody');
+                    tableBody.empty();
+
+                    $.each(data, function(index, product) {
+                        var row = '<tr>';
+                        row += '<td>' + product.id + '</td>';
+                        row += '<td>' + product.name + '</td>';
+                        row += '<td>' + product.category+ '</td>';
+                        row += '<td>' + product.image + '</td>';
+                        row += '<td>';
+                        row += '<button class="editButton" data-id="' + product.id + '">Edit</button>';
+                        row += '<button class="deleteButton" data-id="' + product.id + '">Delete</button>';
+                        row += '</td>';
+                        row += '</tr>';
+                        tableBody.append(row);
+                    });
+
+                    $('.editButton').click(function() {
+                        var productId = $(this).data('id');
+                        editProduct(productId);
+                    });
+
+                    $('.deleteButton').click(function() {
+                        var productId = $(this).data('id');
+                        deleteProduct(productId);
+                    });
+                }
+            });
+        }
+
+        function createProduct(name, category,image) {
+            var product = {
+                name: name,
+                category: category,
+                image:image
+
+            };
+
+            $.ajax({
+                url: '/products',
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify(product),
+                success: function(data) {
+                    $('#productName').val('');
+                    $('#productCategory').val('');
+                    $('#productImage').val('');
+                    loadProducts();
+                }
+            });
+        }
+
+        function editProduct(id) {
+            $.ajax({
+                url: '/products/' + id,
+                type: 'GET',
+                success: function(data) {
+                    $('#productId').val(data.id);
+                    $('#productName').val(data.name);
+                    $('#productCategory').val(data.category);
+                    $('#productImage').val(data.image);
+                }
+            });
+        }
+
+        function updateProduct(id, name, category,image) {
+            var product = {
+                id: id,
+                name: name,
+                category:category,
+                image:image
+            };
+
+            $.ajax({
+                url: '/products/' + id,
+                type: 'PUT',
+                contentType: 'application/json',
+                data: JSON.stringify(product),
+                success: function(data) {
+                    $('#productId').val('');
+                    $('#productName').val('');
+                    $('#productCategory').val('');
+                    $('#productImage').val('');
+                    loadProducts();
+                }
+            });
+        }
+
+        function deleteProduct(id) {
+            $.ajax({
+                url: '/products/' + id,
+                type: 'DELETE',
+                success: function() {
+                    loadProducts();
+                }
+            });
+        }
+    });
+</script>
+</body>
+</html>
