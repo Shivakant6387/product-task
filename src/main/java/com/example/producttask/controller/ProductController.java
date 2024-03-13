@@ -16,7 +16,7 @@ public class ProductController {
 
     @GetMapping
     public String index() {
-        return "index";
+        return "index.html";
     }
 
     @GetMapping("/all")
